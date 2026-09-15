@@ -1,0 +1,45 @@
+name: Verify IaC bucket-region patch
+
+on:
+  push:
+    branches:
+      - ci/iac-bucket-region-ubuntu-20260915
+
+permissions:
+  contents: read
+
+jobs:
+  iac-tests:
+    name: IaC tests on Ubuntu for 904c3c921701
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the exact upstream PR head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: mrfandu1/cli
+          ref: 904c3c92170164ce407ca40940533b1409a867f7
+          persist-credentials: false
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      - name: Verify source and toolchain
+        env:
+          EXPECTED_PR_HEAD: 904c3c92170164ce407ca40940533b1409a867f7
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_PR_HEAD"
+          test -z "$(git status --porcelain)"
+          git rev-parse HEAD
+          rustc --version --verbose
+          cargo --version
+          cmake --version
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Compile the complete CLI test binary and run all IaC tests
+        run: cargo test --locked --bin railway iac:: -- --nocapture

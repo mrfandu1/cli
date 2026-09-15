@@ -42,4 +42,5 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Compile the complete CLI test binary and run all IaC tests
-        run: cargo test --locked --bin railway iac:: -- --nocapture
+        run: |
+          cargo test --locked --bin railway iac:: -- --nocapture
